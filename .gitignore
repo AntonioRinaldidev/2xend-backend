@@ -2,7 +2,7 @@
 node_modules/
 
 #environment
-.env
+
 .env.local
 .env.development
 .env.production
@@ -25,3 +25,4 @@ build/
 # OS generated files
 .DS_Store
 Thumbs.db
+/src/generated/prisma

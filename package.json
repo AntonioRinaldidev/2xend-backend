@@ -16,5 +16,18 @@
     "url": "https://github.com/AntonioRinaldidev/Secure-Backend-Learning/issues"
   },
   "homepage": "https://github.com/AntonioRinaldidev/Secure-Backend-Learning#readme",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "@prisma/client": "^6.11.1",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "prisma": "^6.11.1"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/jsonwebtoken": "^9.0.10"
+  }
 }

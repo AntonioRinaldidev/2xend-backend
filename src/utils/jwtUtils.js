@@ -55,6 +55,9 @@ function decodeToken(token) {
   return jwt.decode(token);
 }
 
+
+
+
 module.exports = {
   generateAccessToken,
   generateRefreshToken,

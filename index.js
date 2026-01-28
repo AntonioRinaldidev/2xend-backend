@@ -5,7 +5,7 @@ const authRoute = require("./src/routes/authRoutes");
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/auth", authRoute);
+app.use("/api/v1/auth", authRoute);
 app.get("/", (req, res) => {
   res.send("2xend Backend is running");
 });

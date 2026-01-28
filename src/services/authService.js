@@ -6,6 +6,7 @@ const {
   generateRefreshToken,
   verifyRefreshToken,
 } = require("../utils/jwtUtils");
+const { user } = require("../config/database");
 
 const prisma = new PrismaClient();
 
@@ -13,9 +14,9 @@ async function createSession(userId, accessToken, refreshToken) {
   const expiresAt = new Date();
   expiresAt.setMinutes(expiresAt.getMinutes() + 15);
 
-  const refreshExipiresAt = new Date();
-  refreshExipiresAt.setDate(refreshExipiresAt.getDate() + 7);
-  return await prisma.UserSession.create({
+  const refreshExpiresAt = new Date();
+  refreshExpiresAt.setDate(refreshExpiresAt.getDate() + 7);
+  return await prisma.userSession.create({
     data: {
       userId,
       accessToken,
@@ -26,66 +27,41 @@ async function createSession(userId, accessToken, refreshToken) {
   });
 }
 
-async function registerUser(email, plainTextPassword, firstName, lastName) {
-  try {
-    // Validate input
-    if (!email || !plainTextPassword || !firstName || !lastName) {
-      return BaseResponse.error("All fields are required");
-    }
-    if (
-      typeof email !== "string" ||
-      typeof plainTextPassword !== "string" ||
-      typeof firstName !== "string" ||
-      typeof lastName !== "string"
-    ) {
-      return BaseResponse.error("Invalid input types");
-    }
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
-    if (existingUser) {
-      return BaseResponse.error("User already exists with this email");
-    }
-    // Hash the password before storing it
-    const hashedPassword = await hashPassword(plainTextPassword);
-    // Create the user in the database
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-      },
-    });
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-    await createSession(user.id, accessToken, refreshToken);
-
-    // Exclude password from the returned user object
-    const { password: _, ...userWithoutPassword } = user;
-    return BaseResponse.success("User registered successfully", {
-      user: userWithoutPassword,
-      accessToken,
-      refreshToken,
-    });
-  } catch (error) {
-    console.error("Error registering user:", error);
-    return BaseResponse.error("An error occurred while registering the user");
+async function loginUser(phoneNumber, plainTextPassword) {
+  if (!phoneNumber || !plainTextPassword) {
+    return BaseResponse.error("Phone number and password are required");
   }
-}
-
-async function loginUser(email, plainTextPassword) {
-  if (!email || !plainTextPassword) {
-    return BaseResponse.error("Email and password are required");
-  }
-  if (typeof email !== "string" || typeof plainTextPassword !== "string") {
+  if (
+    typeof phoneNumber !== "string" ||
+    typeof plainTextPassword !== "string"
+  ) {
     return BaseResponse.error("Invalid input types");
   }
   try {
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findUnique({ where: { phoneNumber } });
     if (!user) {
-      return BaseResponse.error("User not found");
+      const newUser = await prisma.user.create({
+        data: {
+          phoneNumber,
+          password: await hashPassword(plainTextPassword),
+          isProfileComplete: false,
+        },
+      });
+      const accessToken = generateAccessToken(newUser);
+      const refreshToken = generateRefreshToken(newUser);
+      await createSession(newUser.id, accessToken, refreshToken);
+      const { password: _, ...userWithoutPassword } = newUser;
+      return BaseResponse.success("New user created, proceed to setup", {
+        exists: false,
+        isProfileComplete: false,
+        needsName: true,
+        user: userWithoutPassword,
+        needsPhone: false,
+        accessToken,
+        refreshToken,
+      });
     }
+
     const isPasswordValid = await verifyPassword(
       plainTextPassword,
       user.password,
@@ -93,14 +69,30 @@ async function loginUser(email, plainTextPassword) {
     if (!isPasswordValid) {
       return BaseResponse.error("Invalid password");
     }
+
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
     await createSession(user.id, accessToken, refreshToken);
 
     const { password: _, ...userWithoutPassword } = user;
+    if (!user.isProfileComplete) {
+      return BaseResponse.success("Profile incomplete, proceed to setup", {
+        exists: true,
+        isProfileComplete: false,
+        user,
+        needsName: true,
+        needsPhone: false,
+        accessToken,
+        refreshToken,
+      });
+    }
 
     return BaseResponse.success("Login successful", {
+      exists: true,
+      isProfileComplete: true,
       user: userWithoutPassword,
+      needsName: false,
+      needsPhone: false,
       accessToken,
       refreshToken,
     });
@@ -116,42 +108,97 @@ async function loginWithProvider(provider, providerId, email, details) {
       where: { [provider === "apple" ? "appleId" : "googleId"]: providerId },
     });
 
-    if (user) {
+    if (user && user.isProfileComplete) {
       const accessToken = generateAccessToken(user);
       const refreshToken = generateRefreshToken(user);
       await createSession(user.id, accessToken, refreshToken);
 
       return BaseResponse.success("Login successful", {
+        exists: true,
         user,
         accessToken,
         refreshToken,
-        needsPhone: !user.phoneNumber,
       });
-    } else {
+    } else if (!user) {
       const newUser = await prisma.user.create({
         data: {
-          [provider === "apple" ? "appleId" : "googleId"]: providerId,
           email,
-          firstName: details.firstName,
-          lastName: details.lastName,
+          firstName: details.firstName || "",
+          lastName: details.lastName || "",
+          [provider === "apple" ? "appleId" : "googleId"]: providerId,
           isProfileComplete: false,
         },
       });
-
       const accessToken = generateAccessToken(newUser);
       const refreshToken = generateRefreshToken(newUser);
       await createSession(newUser.id, accessToken, refreshToken);
-
-      return BaseResponse.success("User registered, phone required", {
+      return BaseResponse.success("New user created, proceed to setup", {
+        exists: false,
+        isProfileComplete: false,
         user: newUser,
+        needsPhone: true,
         accessToken,
         refreshToken,
+      });
+    } else {
+      const accessToken = generateAccessToken(user);
+      const refreshToken = generateRefreshToken(user);
+      await createSession(user.id, accessToken, refreshToken);
+      return BaseResponse.success("Profile incomplete, proceed to setup", {
+        exists: true,
+        isProfileComplete: false,
+        user,
         needsPhone: true,
+        accessToken,
+        refreshToken,
       });
     }
   } catch (error) {
     console.error("Provider Login Error:", error);
     return BaseResponse.error("An error occurred during social login");
+  }
+}
+
+async function completeProfile(userId, { firstName, lastName, phoneNumber }) {
+  try {
+    const updateData = { isProfileComplete: true };
+    if (firstName) updateData.firstName = firstName;
+    if (lastName) updateData.lastName = lastName;
+    if (phoneNumber) updateData.phoneNumber = phoneNumber;
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+    const { password: _, ...userWithoutPassword } = updatedUser;
+    return BaseResponse.success("Profile completed successfully", {
+      user: userWithoutPassword,
+      isProfileComplete: true,
+    });
+  } catch (error) {
+    console.error("Error completing profile:", error);
+
+    if (error.code === "P2002") {
+      return BaseResponse.error(
+        "Phone number already associated with another account",
+        { phoneNumberExists: true },
+      );
+    }
+    return BaseResponse.error("An error occurred while completing the profile");
+  }
+}
+
+async function logoutUser(token) {
+  try {
+    await prisma.userSession.updateMany({
+      where: {
+        OR: [{ accessToken: token }, { refreshToken: token }],
+      },
+      data: { isActive: false },
+    });
+
+    return BaseResponse.success("Logged out successfully");
+  } catch (error) {
+    return BaseResponse.error("Logout failed", error.message);
   }
 }
 
@@ -198,21 +245,6 @@ async function refreshTokens(refreshToken) {
   }
 }
 
-async function logoutUser(token) {
-  try {
-    await prisma.userSession.updateMany({
-      where: {
-        OR: [{ accessToken: token }, { refreshToken: token }],
-      },
-      data: { isActive: false },
-    });
-
-    return BaseResponse.success("Logged out successfully");
-  } catch (error) {
-    return BaseResponse.error("Logout failed", error.message);
-  }
-}
-
 async function validateSession(accessToken) {
   try {
     const session = await prisma.userSession.findUnique({
@@ -231,10 +263,10 @@ async function validateSession(accessToken) {
 }
 
 module.exports = {
-  registerUser,
   loginUser,
   loginWithProvider,
-  refreshTokens,
+  completeProfile,
   logoutUser,
+  refreshTokens,
   validateSession,
 };

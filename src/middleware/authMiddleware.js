@@ -37,6 +37,7 @@ const authenticateToken = async (req, res, next) => {
     return res.status(500).json(BaseResponse.error("Internal server error"));
   }
 };
+
 const checkProfileComplete = (req, res, next) => {
   if (req.user && !req.user.isProfileComplete) {
     return res

@@ -1,25 +1,25 @@
 require("dotenv").config();
 
+// Se esiste DATABASE_URL (usata da Prisma), la usiamo come riferimento principale
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  throw new Error("DATABASE_URL is not set in environment variables.");
+}
+
+// Estraiamo i dati dalla stringa per compatibilità con eventuali altre parti del codice
+// Esempio stringa: postgresql://user:pass@host:port/dbname
+const matches = databaseUrl.match(
+  /postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/,
+);
+
 const DbConfig = {
-    host : process.env.DB_HOST,
-    port : process.env.DB_PORT,
-    database : process.env.DB_NAME,
-    user : process.env.DB_USER,
-    password : process.env.DB_PASSWORD,
+  url: databaseUrl,
+  user: matches ? matches[1] : null,
+  password: matches ? matches[2] : null,
+  host: matches ? matches[3] : null,
+  port: matches ? matches[4] : null,
+  database: matches ? matches[5] : null,
 };
 
-const requiredEnvVars = [
-    "DB_HOST",
-    "DB_PORT",
-    "DB_NAME",
-    "DB_USER",
-    "DB_PASSWORD",
-];
-
-for (const envVar of requiredEnvVars) {
-    if (!process.env[envVar]) {
-        throw new Error(`Environment variable ${envVar} is not set.`);
-    }
-}   
-
-module.exports = DbConfig
+module.exports = DbConfig;

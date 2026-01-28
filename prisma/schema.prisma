@@ -15,16 +15,28 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  firstName   String?
-  lastName    String?
-  isActive    Boolean  @default(true)
-  role        Role     @default(USER)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  sessions UserSession[]
+  id                String   @id @default(cuid())
+  email             String?  @unique 
+  password          String?  
+  
+ 
+  appleId           String?  @unique 
+  googleId          String?  @unique
+  
+
+  phoneNumber       String?  @unique 
+  
+  firstName         String? 
+  lastName          String? 
+  isActive          Boolean  @default(true) 
+  role              Role     @default(USER) 
+  
+
+  isProfileComplete Boolean  @default(false)
+  
+  createdAt         DateTime @default(now()) 
+  updatedAt         DateTime @updatedAt 
+  sessions          UserSession[] 
 
   @@map("users")
 }

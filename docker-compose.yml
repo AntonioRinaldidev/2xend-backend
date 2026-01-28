@@ -1,13 +1,16 @@
 services:
   database:
-    image: postgres:15
+    image: postgres:17
     container_name: secure_db
     environment:
-      POSTGRES_DB: secure_backend_dev
+      # Allineato con "Database Name" su Easypanel
+      POSTGRES_DB: db-2xend
+      # Allineato con "User" su Easypanel
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: dev_password_123
+      # Allineato con "Password" su Easypanel
+      POSTGRES_PASSWORD: 9b9fe57d821d11cc6061
     ports:
-      - '5433:5432'
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
 

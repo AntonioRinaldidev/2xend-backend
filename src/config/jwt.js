@@ -12,26 +12,26 @@ const jwtConfig = {
     algorithm: "HS256",
   },
 };
-if (!jwtConfig.accesstoken.secret) {
+if (!jwtConfig.accessToken.secret) {
   throw new Error("JWT secret is not set in environment variables.");
 }
-if (!jwtConfig.accesstoken.expiresIn) {
+if (!jwtConfig.accessToken.expiresIn) {
   throw new Error("JWT expiration time is not set in environment variables.");
 }
-if (!jwtConfig.accesstoken.algorithm) {
+if (!jwtConfig.accessToken.algorithm) {
   throw new Error("JWT algorithm is not set in environment variables.");
 }
-if (!jwtConfig.refreshtoken.secret) {
+if (!jwtConfig.refreshToken.secret) {
   throw new Error(
     "JWT refresh token secret is not set in environment variables.",
   );
 }
-if (!jwtConfig.refreshtoken.expiresIn) {
+if (!jwtConfig.refreshToken.expiresIn) {
   throw new Error(
     "JWT refresh token expiration time is not set in environment variables.",
   );
 }
-if (!jwtConfig.refreshtoken.algorithm) {
+if (!jwtConfig.refreshToken.algorithm) {
   throw new Error(
     "JWT refresh token algorithm is not set in environment variables.",
   );

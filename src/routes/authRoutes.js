@@ -13,7 +13,7 @@ const BaseResponse = require("../utils/BaseResponse");
 router.post("/login", async (req, res) => {
   try {
     const { phoneNumber, plainTextPassword } = req.body;
-    const response = await loginUser({ phoneNumber, plainTextPassword });
+    const response = await loginUser(phoneNumber, plainTextPassword);
     const statusCode = response.isSuccess ? 200 : 400;
     res.status(statusCode).json(response);
   } catch (e) {

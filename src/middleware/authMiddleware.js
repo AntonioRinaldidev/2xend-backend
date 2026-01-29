@@ -11,10 +11,11 @@ const authenticateToken = async (req, res, next) => {
         .json(BaseResponse.error("Authorization header is missing"));
     }
 
-    const token = authHeader.split(" ")[1];
+    const token = authHeader.split(" ")[1].trim();
     if (!token) {
       return res.status(404).json(BaseResponse.error("Token is missing"));
     }
+    
 
     const decoded = verifyAccessToken(token);
     if (!decoded) {
@@ -22,7 +23,7 @@ const authenticateToken = async (req, res, next) => {
     }
 
     // Validate session
-    const sessionValid = await validateSession(decoded.id, token);
+    const sessionValid = await validateSession(token);
     if (!sessionValid) {
       return res
         .status(401)

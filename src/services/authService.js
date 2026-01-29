@@ -253,17 +253,34 @@ async function validateSession(accessToken) {
       include: { user: true },
     });
 
-    if (!session || !session.isActive || session.expiresAt < new Date()) {
+    if (!session) {
+      console.log("❌ Debug Session: Token non trovato nel database");
+      return null;
+    }
+
+    if (!session.isActive) {
+      console.log(
+        "❌ Debug Session: La sessione è marcata come isActive: false",
+      );
+      return null;
+    }
+
+    if (session.expiresAt < new Date()) {
+      console.log(
+        "❌ Debug Session: Sessione scaduta nel DB. Scadenza:",
+        session.expiresAt,
+        "Ora attuale:",
+        new Date(),
+      );
       return null;
     }
 
     return session.user;
   } catch (error) {
-    console.error("Session validation error:", error);
+    console.error("❌ Debug Session: Errore durante la query Prisma:", error);
     return null;
   }
 }
-
 module.exports = {
   loginUser,
   loginWithProvider,

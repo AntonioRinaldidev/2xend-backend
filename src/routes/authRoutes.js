@@ -24,6 +24,7 @@ router.post("/login", async (req, res) => {
 
 router.post("/login_provider", async (req, res) => {
   try {
+    console.log(req.body);
     const { provider, providerId, email, details } = req.body;
     const response = await loginWithProvider(
       provider,

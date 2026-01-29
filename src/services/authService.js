@@ -105,6 +105,14 @@ async function loginUser(phoneNumber, plainTextPassword) {
 
 async function loginWithProvider(provider, providerId, email, details) {
   try {
+    if (!providerId) {
+      console.error(
+        `❌ Errore Login Social: providerId mancante per ${provider}`,
+      );
+      return BaseResponse.error(
+        `Identificativo ${provider} non ricevuto correttamente dal dispositivo.`,
+      );
+    }
     const user = await prisma.user.findUnique({
       where: { [provider === "apple" ? "appleId" : "googleId"]: providerId },
     });

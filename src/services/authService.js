@@ -259,6 +259,7 @@ async function validateSession(accessToken) {
 
     return session.user;
   } catch (error) {
+    console.error("Session validation error:", error);
     return null;
   }
 }

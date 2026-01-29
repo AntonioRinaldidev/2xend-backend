@@ -17,6 +17,7 @@ router.post("/login", async (req, res) => {
     const statusCode = response.isSuccess ? 200 : 400;
     res.status(statusCode).json(response);
   } catch (e) {
+    console.log(e);
     res.status(500).json(BaseResponse.error("Login Failed"));
   }
 });

@@ -23,6 +23,7 @@ async function createSession(userId, accessToken, refreshToken) {
       refreshToken,
       expiresAt,
       refreshExpiresAt,
+      isActive: true,
     },
   });
 }

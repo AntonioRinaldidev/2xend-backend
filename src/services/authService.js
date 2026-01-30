@@ -174,14 +174,29 @@ async function completeProfile(userId, { firstName, lastName, phoneNumber }) {
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (phoneNumber) updateData.phoneNumber = phoneNumber;
+
+    await prisma.userSession.updateMany({
+      where: { userId: userId, isActive: true },
+      data: { isActive: false },
+    });
+
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData,
     });
     const { password: _, ...userWithoutPassword } = updatedUser;
+
+    const accessToken = generateAccessToken(userWithoutPassword);
+    const refreshToken = generateRefreshToken(userWithoutPassword);
+
+    // 4. Crea la nuova sessione ufficiale
+    await createSession(userWithoutPassword.id, accessToken, refreshToken);
+
     return BaseResponse.success("Profile completed successfully", {
       user: userWithoutPassword,
       isProfileComplete: true,
+      accessToken,
+      refreshToken,
     });
   } catch (error) {
     console.error("Error completing profile:", error);

@@ -15,3 +15,4 @@ router.get("/:id", authenticateToken, async (req, res) => {
     res.status(500).json(BaseResponse.error("Failed to retrieve user"));
   }
 });
+module.exports = router;

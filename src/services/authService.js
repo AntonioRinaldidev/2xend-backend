@@ -6,7 +6,6 @@ const {
   generateRefreshToken,
   verifyRefreshToken,
 } = require("../utils/jwtUtils");
-const { user } = require("../config/database");
 
 const prisma = new PrismaClient();
 
@@ -80,7 +79,7 @@ async function loginUser(phoneNumber, plainTextPassword) {
       return BaseResponse.success("Profile incomplete, proceed to setup", {
         exists: true,
         isProfileComplete: false,
-        user,
+        user: userWithoutPassword,
         needsName: true,
         needsPhone: false,
         accessToken,

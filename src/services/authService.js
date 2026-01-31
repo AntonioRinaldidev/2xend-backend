@@ -7,6 +7,8 @@ const {
   verifyRefreshToken,
 } = require("../utils/jwtUtils");
 
+const { trackPresence } = require("../middleware/presence");
+const { redisClient } = require("../services/redisService.js");
 const prisma = new PrismaClient();
 
 async function createSession(userId, accessToken, refreshToken) {
@@ -210,16 +212,21 @@ async function completeProfile(userId, { firstName, lastName, phoneNumber }) {
   }
 }
 
-async function logoutUser(token) {
+async function logoutUser(token, userId) {
   try {
+    await redisClient.del(`presence:${userId}`);
     await prisma.userSession.updateMany({
       where: {
         OR: [{ accessToken: token }, { refreshToken: token }],
       },
       data: { isActive: false },
     });
+    await prisma.user.update({
+      where: { id: userId, isActive: true },
+      data: { isActive: false, lastActivity: new Date() },
+    });
 
-    return BaseResponse.success("Logged out successfully");
+    return BaseResponse.success("User logged out and set to offline");
   } catch (error) {
     return BaseResponse.error("Logout failed", error.message);
   }
@@ -303,6 +310,7 @@ async function validateSession(accessToken) {
     return null;
   }
 }
+
 module.exports = {
   loginUser,
   loginWithProvider,

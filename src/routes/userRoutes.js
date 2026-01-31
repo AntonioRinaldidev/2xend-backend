@@ -4,8 +4,8 @@ const router = express.Router();
 const { getUserById } = require("../services/userService");
 const { authenticateToken } = require("../middleware/authMiddleware");
 const BaseResponse = require("../utils/BaseResponse");
-
-router.get("/:id", authenticateToken, async (req, res) => {
+const { trackPresence } = require("../middleware/presence");
+router.get("/:id", authenticateToken, trackPresence, async (req, res) => {
   try {
     const userId = req.params.id;
     const response = await getUserById(userId);

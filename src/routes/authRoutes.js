@@ -9,6 +9,11 @@ const {
 } = require("../services/authService");
 const { authenticateToken } = require("../middleware/authMiddleware");
 const BaseResponse = require("../utils/BaseResponse");
+const { trackPresence } = require("../middleware/presence");
+
+router.get("/ping", authenticateToken, trackPresence, (req, res) => {
+  res.status(200).json(BaseResponse.success("Pong"));
+});
 
 router.post("/login", async (req, res) => {
   try {
@@ -39,7 +44,7 @@ router.post("/login_provider", async (req, res) => {
   }
 });
 
-router.post("/complete_profile", authenticateToken, async (req, res) => {
+router.post("/complete_profile", authenticateToken,trackPresence, async (req, res) => {
   try {
     const userId = req.user.id;
     const { firstName, lastName, phoneNumber } = req.body;
@@ -70,7 +75,7 @@ router.post("/refresh", async (req, res) => {
 
 router.post("/logout", authenticateToken, async (req, res) => {
   try {
-    const result = await logoutUser(req.token);
+    const result = await logoutUser(req.token, req.user.id);
     res.status(200).json(result);
   } catch (e) {
     res.status(500).json(BaseResponse.error("Logout Failed"));

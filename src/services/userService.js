@@ -3,6 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 const BaseResponse = require("../utils/BaseResponse");
 const prisma = new PrismaClient();
 
+
 async function getUserById(userId) {
   if (!userId || typeof userId !== "number") {
     return BaseResponse.error("Invalid user ID");
